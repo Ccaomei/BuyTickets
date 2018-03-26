@@ -81,6 +81,9 @@ public:
 	// 解析卡口Json数据 
 	void ParseJsonInfo(const std::string &strJsonInfo);
 
+	//解析站点的Json数据
+	void ParseStationJsonInfo(const std::string &strStationJsonInfo);
+
 	// 关闭句柄 
 	void Release();
 

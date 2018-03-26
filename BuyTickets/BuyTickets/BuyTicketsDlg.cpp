@@ -7,6 +7,7 @@
 #include "BuyTicketsDlg.h"
 #include "afxdialogex.h"
 #include "ini.h"
+#include <map>
 //#include "WininetHttp.h"
 #include <atlconv.h>
 #include<iostream>
@@ -14,6 +15,12 @@ using namespace std;
 
 extern TicketInfo *ticketInfo;
 extern int AllTrainNum;
+
+extern map<string, string>jianxie1_map;
+extern map<string, string>hanzi_map;
+extern map<string, string>pingyin_map;
+extern map<string, string>jianxie2_map;
+extern map<string, string>xuhao_map;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -159,9 +166,8 @@ BOOL CBuyTicketsDlg::OnInitDialog()
 	//初始化的时候，把所有站点 都解析，加载到内存中
 	std::string retStrStation = wininetHttp.RequestJsonInfo("https://kyfw.12306.cn/otn/resources/js/framework/station_name.js", WE_Get, "", "");
 	std::string strRetStrStation = wininetHttp.UtfToGbk(retStrStation.c_str());
+	wininetHttp.ParseStationJsonInfo(strRetStrStation);
 
-
-	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -309,7 +315,67 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	CStringA strA1;
 	strA1 = strFsta1;
 	strstation1 = strA1;
-	strFromstation = KeyValue(strstation1);
+	bool isFondStr = false;
+	map<string, string>::iterator map_it;
+	for(map_it = jianxie1_map.begin(); map_it != jianxie1_map.end(); map_it++)
+	{
+		if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+		{
+			strFromstation = (*map_it).second;
+			isFondStr = true;
+			break;
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = hanzi_map.begin(); map_it != hanzi_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				strFromstation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = pingyin_map.begin(); map_it != pingyin_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				strFromstation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = jianxie2_map.begin(); map_it != jianxie2_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				strFromstation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = xuhao_map.begin(); map_it != xuhao_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				strFromstation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	//strFromstation = KeyValue(strstation1);
+	isFondStr = false;
 
 	string strstation2;
 	CString strFsta2;
@@ -317,7 +383,66 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	CStringA strA2;
 	strA2 = strFsta2;
 	strstation2 = strA2;
-	strTostation = KeyValue(strstation2);
+	for(map_it = jianxie1_map.begin(); map_it != jianxie1_map.end(); map_it++)
+	{
+		if(strcmp((*map_it).first.c_str(), strstation2.c_str()) == 0)
+		{
+			strTostation = (*map_it).second;
+			isFondStr = true;
+			break;
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = hanzi_map.begin(); map_it != hanzi_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation2.c_str()) == 0)
+			{
+				strTostation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = pingyin_map.begin(); map_it != pingyin_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation2.c_str()) == 0)
+			{
+				strTostation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = jianxie2_map.begin(); map_it != jianxie2_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation2.c_str()) == 0)
+			{
+				strTostation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = xuhao_map.begin(); map_it != xuhao_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation2.c_str()) == 0)
+			{
+				strTostation = (*map_it).second;
+				isFondStr = true;
+				break;
+			}
+		}
+	}
+	//strTostation = KeyValue(strstation2);
+
+
 
 	//组合url
 	strUrl = "https://kyfw.12306.cn/otn/leftTicket/queryO?leftTicketDTO.train_date=";
@@ -350,7 +475,7 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	
 	std::string strJsonInfo = strEnd;
 	wininetHttp.ParseJsonInfo(strJsonInfo);
-
+	m_ListTickets.DeleteAllItems();
 	for(int i = AllTrainNum -1 ; i >= 0; i--)
 	{
 		m_ListTickets.InsertItem(0, A2W(ticketInfo[i].station_train_code.c_str()));   

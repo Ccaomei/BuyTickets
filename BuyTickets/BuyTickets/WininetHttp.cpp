@@ -60,12 +60,13 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 
 		ParseURLWeb(lpUrl, strHostName, strPageName, port);
 
-		printf("lpUrl:%s,\nstrHostName:%s,\nstrPageName:%s,\nport:%d\n",lpUrl.c_str(),strHostName.c_str(),strPageName.c_str(),(int)port);
+		//printf("lpUrl:%s,\nstrHostName:%s,\nstrPageName:%s,\nport:%d\n",lpUrl.c_str(),strHostName.c_str(),strPageName.c_str(),(int)port);
 
 		m_hConnect = InternetConnectA(m_hSession, strHostName.c_str(), port, NULL, NULL, INTERNET_SERVICE_HTTP, NULL, NULL);
 		if(m_hConnect == NULL)
 		{
 			int num = GetLastError();
+			AfxMessageBox(_T("InternetConnectA"));
 			throw WE_ConnectErr;
 		}
 
@@ -163,6 +164,7 @@ void printVector(vector<string> vector1){
 vector<string> SPlit(string str,string separator)
 {    
 	vector<string> result;  
+	result.clear();
 	int cutAt;    
 	while((cutAt = str.find_first_of(separator))!=str.npos)
 	{    
@@ -253,6 +255,74 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 	}
 	EveryTicketVec.clear();
 	mp.clear();
+}
+//@bjb|北京北|VAP|beijingbei|bjb|0  一个站名是这种形式
+
+vector<string> EveryStationVec;  
+vector<string> OneStationVec;
+map<string, string>jianxie1_map;
+map<string, string>hanzi_map;
+map<string, string>pingyin_map;
+map<string, string>jianxie2_map;
+map<string, string>xuhao_map;
+
+//split函数  
+vector<string> My_SPlit(string str,string separator)
+{    
+	vector<string> result;  
+	result.clear();
+	int cutAt;    
+	int i = 0;
+	while((cutAt = str.find_first_of(separator))!=str.npos)
+	{    
+		if(cutAt>0)
+		{    
+			if(i != 0)
+			{
+				result.push_back(str.substr(0,cutAt));  
+			}
+		} 
+		else if(cutAt == 0)
+		{
+			result.push_back("-");
+		}
+		str=str.substr(cutAt+1);    
+		i++;
+	}    
+	if(str.length()>0){    
+		result.push_back(str);    
+	}    
+	return result;    
+}  
+
+//解析站点的Json数据
+void CWininetHttp::ParseStationJsonInfo(const std::string &strStationJsonInfo)
+{
+	EveryStationVec.clear();
+	jianxie1_map.clear();
+	hanzi_map.clear();
+	pingyin_map.clear();
+	jianxie2_map.clear();
+	xuhao_map.clear();
+	EveryStationVec = My_SPlit(strStationJsonInfo, "@"); //分离每一个站名的字符串
+	
+	for(int i = 0; i < EveryStationVec.size(); i++)
+	{
+		OneStationVec.clear();
+		OneStationVec = SPlit(EveryStationVec[i], "|");
+		jianxie1_map.insert(pair<string, string>(OneStationVec[0], OneStationVec[2]));
+		hanzi_map.insert(pair<string, string>(OneStationVec[1], OneStationVec[2]));
+		pingyin_map.insert(pair<string, string>(OneStationVec[3], OneStationVec[2]));
+		jianxie2_map.insert(pair<string, string>(OneStationVec[4], OneStationVec[2]));
+		xuhao_map.insert(pair<string, string>(OneStationVec[5], OneStationVec[2]));
+		OneStationVec.clear();
+	}
+	//map<string, string>::iterator mp_it;
+
+	//for(mp_it = EveryStationVec.begin(); mp_it != EveryStationVec.end(); mp_it++)
+	//{
+	//
+	//}
 }
 
 // 解析URL地址
