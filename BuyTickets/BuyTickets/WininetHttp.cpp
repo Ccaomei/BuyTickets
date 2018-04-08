@@ -110,7 +110,7 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 
 		DWORD dwHeaderSize = (strHeader.empty()) ? 0 : strlen(strHeader.c_str());
 
-		bool bRet = false;
+		BOOL bRet = false;
 		if(WE_Get == type)
 		{
 			bRet = HttpSendRequestA(m_hRequest, strHeader.c_str(), dwHeaderSize, NULL, 0);
@@ -223,6 +223,7 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 		EveryTicketVec = SPlit(EveryInfo, "|");
 		//if(int m = 0; m < EveryTicketVec.size(); m++)
 		//{
+		ticketInfo[j].train_code_xuhao		= EveryTicketVec[2];
 		ticketInfo[j].station_train_code	= EveryTicketVec[3];
 		//ticketInfo[j].from_station_name	= EveryTicketVec[6];
 		//ticketInfo[j].to_station_name		= EveryTicketVec[7];
@@ -256,6 +257,37 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 	EveryTicketVec.clear();
 	mp.clear();
 }
+
+vector<string> OneTrainAllStation;	//存放一个车 经过所有站点
+
+void CWininetHttp::ParseTrainStationJsonInfo(const std::string &strTrainStationJsonInfo)
+{
+	Json::Reader reader;		 //解析json用Json::Reader
+	Json::Value value;			 //可以代表任意类型
+
+	if(!reader.parse(strTrainStationJsonInfo, value))
+	{
+		;
+	}
+	OneTrainAllStation.clear();
+	int allOneTrainNum = value["data"]["data"].size();
+	for(int i = 0; i < allOneTrainNum; i++)
+	{
+		//string EveryInfo = value["data"]["result"][i].asString();
+		for(auto sub = value["data"]["data"][i].begin(); sub != value["data"]["data"][i].end(); sub++) //json 数据里面的对象 都用迭代器遍历
+		{
+			string strFir = sub.memberName();
+			if(strcmp("station_name", strFir.c_str()) == 0)
+			{
+				string strSec = value["data"]["data"][i][sub.memberName()].asString();
+				OneTrainAllStation.push_back(strSec);
+				break;
+			}
+		}
+	}
+}
+
+
 //@bjb|北京北|VAP|beijingbei|bjb|0  一个站名是这种形式
 
 vector<string> EveryStationVec;  
@@ -306,7 +338,7 @@ void CWininetHttp::ParseStationJsonInfo(const std::string &strStationJsonInfo)
 	xuhao_map.clear();
 	EveryStationVec = My_SPlit(strStationJsonInfo, "@"); //分离每一个站名的字符串
 
-	for(int i = 0; i < EveryStationVec.size(); i++)
+	for(size_t i = 0; i < EveryStationVec.size(); i++)
 	{
 		OneStationVec.clear();
 		OneStationVec = SPlit(EveryStationVec[i], "|");

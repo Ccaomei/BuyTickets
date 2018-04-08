@@ -36,6 +36,7 @@ enum HttpRequest
 
 
 struct TicketInfo{
+	string train_code_xuhao;	//车次序号  2号位置
 	string station_train_code;	//车次		3号位置
 	string from_station_name;	//始发站    6号位置
 	string to_station_name;		//终点站    7号位置
@@ -95,6 +96,9 @@ public:
 
 	// UTF-8转为GBK2312
 	char* UtfToGbk(const char* utf8);
+
+	//解析一辆车次的所有站点json数据
+	void ParseTrainStationJsonInfo(const std::string &strTrainStationJsonInfo);
 
 
 

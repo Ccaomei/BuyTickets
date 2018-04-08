@@ -16,11 +16,19 @@ using namespace std;
 extern TicketInfo *ticketInfo;
 extern int AllTrainNum;
 
+vector<string> AllStation_vec;		//存放 查询车站后的所有车次；
+vector<string> AllTrainXuhao_vec;	//每一辆火车的序号；
+
+vector<string> strEveryURL;			//每一辆车次 对应的url 用来访问每一个车次的所有站点
+
 extern map<string, string>jianxie1_map;
 extern map<string, string>hanzi_map;
 extern map<string, string>pingyin_map;
 extern map<string, string>jianxie2_map;
 extern map<string, string>xuhao_map;
+
+extern vector<string> OneTrainAllStation;	//存放一个车 经过所有站点
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -79,6 +87,7 @@ void CBuyTicketsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_Tickets, m_ListTickets);
 	DDX_Control(pDX, IDC_DATETIMEPICKER_chufa, m_Fromdate);
 	DDX_Control(pDX, IDC_DATETIMEPICKER_fancheng, m_Backdate);
+	DDX_Control(pDX, IDC_COMBO_tuozhanstation, m_StrCombo_Train);
 }
 
 BEGIN_MESSAGE_MAP(CBuyTicketsDlg, CDialogEx)
@@ -91,6 +100,7 @@ BEGIN_MESSAGE_MAP(CBuyTicketsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_putong, &CBuyTicketsDlg::OnBnClickedRadioputong)
 	ON_BN_CLICKED(IDC_RADIO_xuesheng, &CBuyTicketsDlg::OnBnClickedRadioxuesheng)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_BUTTON_tuozhanchaxun, &CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun)
 END_MESSAGE_MAP()
 
 
@@ -135,7 +145,7 @@ BOOL CBuyTicketsDlg::OnInitDialog()
 	radio=(CButton*)GetDlgItem(IDC_RADIO_putong);
 	radio->SetCheck(1);
 
-
+	GetDlgItem(IDC_BUTTON_tuozhanchaxun)->EnableWindow(FALSE);
 	//加载列表的表头信息（每一列的标识）
 	CRect rect;
 	m_ListTickets.GetClientRect(&rect); //获取列表控件的位置和大小
@@ -243,11 +253,63 @@ string KeyValue(string key)
 	return strUrl;
 }
 
+string GetKeyValue(string strstation1)
+{
+	bool isFondStr = false;
+	map<string, string>::iterator map_it;
+	for(map_it = jianxie1_map.begin(); map_it != jianxie1_map.end(); map_it++)
+	{
+		if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+		{
+			return (*map_it).second;
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = hanzi_map.begin(); map_it != hanzi_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				return (*map_it).second;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = pingyin_map.begin(); map_it != pingyin_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				return (*map_it).second;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = jianxie2_map.begin(); map_it != jianxie2_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				return (*map_it).second;
+			}
+		}
+	}
+	if(!isFondStr)
+	{
+		for(map_it = xuhao_map.begin(); map_it != xuhao_map.end(); map_it++)
+		{
+			if(strcmp((*map_it).first.c_str(), strstation1.c_str()) == 0)
+			{
+				return (*map_it).second;
+			}
+		}
+	}
+}
 
 void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 {
 	// TODO: 在此添加控件通知处理程序代码
-
+	GetDlgItem(IDC_BUTTON_tuozhanchaxun)->EnableWindow(TRUE);
 	//接口分析：
 	//协议：https:
 	//域名：kyfw.12306.cn/
@@ -315,7 +377,8 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	CStringA strA1;
 	strA1 = strFsta1;
 	strstation1 = strA1;
-	bool isFondStr = false;
+	strFromstation = GetKeyValue(strstation1);
+	/*bool isFondStr = false;
 	map<string, string>::iterator map_it;
 	for(map_it = jianxie1_map.begin(); map_it != jianxie1_map.end(); map_it++)
 	{
@@ -373,16 +436,16 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 				break;
 			}
 		}
-	}
-	//strFromstation = KeyValue(strstation1);
-	isFondStr = false;
-
+	}*/
+	
 	string strstation2;
 	CString strFsta2;
 	GetDlgItem(IDC_EDIT_deststation)->GetWindowTextW(strFsta2);
 	CStringA strA2;
 	strA2 = strFsta2;
 	strstation2 = strA2;
+	strTostation = GetKeyValue(strstation2);
+	/*isFondStr = false;
 	for(map_it = jianxie1_map.begin(); map_it != jianxie1_map.end(); map_it++)
 	{
 		if(strcmp((*map_it).first.c_str(), strstation2.c_str()) == 0)
@@ -439,12 +502,13 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 				break;
 			}
 		}
-	}
-	//strTostation = KeyValue(strstation2);
+	}*/
+	
 
 
 
 	//组合url
+
 	strUrl = "https://kyfw.12306.cn/otn/leftTicket/queryO?leftTicketDTO.train_date=";
 	strUrl += strFromdate.c_str();
 	strUrl += "&leftTicketDTO.from_station=";
@@ -476,9 +540,13 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	std::string strJsonInfo = strEnd;
 	wininetHttp.ParseJsonInfo(strJsonInfo);
 	m_ListTickets.DeleteAllItems();
+
+	AllStation_vec.clear();
 	for(int i = AllTrainNum -1 ; i >= 0; i--)
 	{
 		m_ListTickets.InsertItem(0, A2W(ticketInfo[i].station_train_code.c_str()));   
+		AllStation_vec.push_back(ticketInfo[i].station_train_code);//把查询的所有车次 都保存下来，然后如果当前查询车次没票的话，就用这个信息 把接下来的几站 票的信息显示出来；
+		AllTrainXuhao_vec.push_back(ticketInfo[i].train_code_xuhao);
 		m_ListTickets.SetItemText(0, 1, A2W(ticketInfo[i].from_station_name.c_str()));   
 		m_ListTickets.SetItemText(0, 2, A2W(ticketInfo[i].to_station_name.c_str()));
 		m_ListTickets.SetItemText(0, 3, A2W(ticketInfo[i].start_time.c_str()));
@@ -497,6 +565,12 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 		m_ListTickets.SetItemText(0, 16, A2W(ticketInfo[i].qt_num.c_str()));
 	}
 	UpdateWindow();
+	
+	for ( int i = 0; i < AllTrainNum; i++ )
+	{
+		m_StrCombo_Train.InsertString( i, A2W(AllStation_vec[AllTrainNum - i - 1].c_str()) );
+	}
+	m_StrCombo_Train.SetCurSel( 0 );
 }
 
 
@@ -537,4 +611,49 @@ void CBuyTicketsDlg::OnClose()
 		ticketInfo = NULL;
 	}
 	CDialogEx::OnClose();
+}
+
+
+void CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	//如果出发地和目的地未填写，请提示填写
+	CString str1;
+	CString str2;
+	GetDlgItem(IDC_EDIT_fromstation)->GetWindowTextW(str1);
+	GetDlgItem(IDC_EDIT_deststation)->GetWindowTextW(str2);
+	if(str1.IsEmpty() || str2.IsEmpty())
+	{
+		AfxMessageBox(_T("请检查出发地和目的地是否填写!\n"));
+		return;
+	}
+	//string FromStation = GetKeyValue(str1);
+	//string ToStation = GetKeyValue(str2);
+	//根据train_no查询车次信息（不需要验证码）
+	//url = https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=240000K1571D&from_station_telecode=BXP&to_station_telecode=XUN&depart_date=2018-04-23
+
+	int num = m_StrCombo_Train.GetCurSel( );
+	string Train_checi = AllStation_vec[AllTrainNum - num - 1];
+
+	//strEveryURL.clear();
+	//for(int i = 0; i < AllStation_vec.size(); i++)
+	{
+		string strurl = "https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=";
+		//strurl += AllTrainXuhao_vec[i];
+		strurl += AllTrainXuhao_vec[AllTrainNum - num - 1];
+		strurl += "&from_station_telecode=";
+		strurl += strFromstation;
+		strurl += "&to_station_telecode=";
+		strurl += strTostation;
+		strurl += "&depart_date=";
+		strurl += strFromdate.c_str();
+		strEveryURL.push_back(strurl);
+	}
+	for(int i = 0; i < strEveryURL.size(); i++)
+	{
+		std::string retStr = wininetHttp.RequestJsonInfo(strEveryURL[i], WE_Get, "", "");
+		std::string strEnd = wininetHttp.UtfToGbk(retStr.c_str());
+		wininetHttp.ParseTrainStationJsonInfo(strEnd);
+	}
+
 }

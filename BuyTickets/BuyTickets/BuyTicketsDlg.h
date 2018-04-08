@@ -6,6 +6,7 @@
 #include "WininetHttp.h"
 #include "afxcmn.h"
 #include "afxdtctl.h"
+#include "afxwin.h"
 
 
 // CBuyTicketsDlg ¶Ô»°¿ò
@@ -53,4 +54,6 @@ public:
 	CDateTimeCtrl m_Fromdate;
 	CDateTimeCtrl m_Backdate;
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedButtontuozhanchaxun();
+	CComboBox m_StrCombo_Train;
 };
