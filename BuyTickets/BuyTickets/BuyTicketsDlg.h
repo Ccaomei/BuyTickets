@@ -55,5 +55,6 @@ public:
 	CDateTimeCtrl m_Backdate;
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtontuozhanchaxun();
-	CComboBox m_StrCombo_Train;
+	afx_msg void OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult);
+	CListCtrl m_List_YuPiao;
 };

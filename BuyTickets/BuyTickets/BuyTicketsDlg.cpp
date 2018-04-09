@@ -28,6 +28,7 @@ extern map<string, string>jianxie2_map;
 extern map<string, string>xuhao_map;
 
 extern vector<string> OneTrainAllStation;	//存放一个车 经过所有站点
+extern vector<TicketInfo*> SaveEveryTrainFoxToStation;
 
 
 #ifdef _DEBUG
@@ -87,7 +88,7 @@ void CBuyTicketsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_Tickets, m_ListTickets);
 	DDX_Control(pDX, IDC_DATETIMEPICKER_chufa, m_Fromdate);
 	DDX_Control(pDX, IDC_DATETIMEPICKER_fancheng, m_Backdate);
-	DDX_Control(pDX, IDC_COMBO_tuozhanstation, m_StrCombo_Train);
+	DDX_Control(pDX, IDC_LIST_yupiao, m_List_YuPiao);
 }
 
 BEGIN_MESSAGE_MAP(CBuyTicketsDlg, CDialogEx)
@@ -101,6 +102,7 @@ BEGIN_MESSAGE_MAP(CBuyTicketsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_xuesheng, &CBuyTicketsDlg::OnBnClickedRadioxuesheng)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON_tuozhanchaxun, &CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun)
+	ON_NOTIFY(NM_CLICK, IDC_LIST_Tickets, &CBuyTicketsDlg::OnNMClickListTickets)
 END_MESSAGE_MAP()
 
 
@@ -149,8 +151,7 @@ BOOL CBuyTicketsDlg::OnInitDialog()
 	//加载列表的表头信息（每一列的标识）
 	CRect rect;
 	m_ListTickets.GetClientRect(&rect); //获取列表控件的位置和大小
-	m_ListTickets.SetExtendedStyle(m_ListTickets.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES);
-	
+	m_ListTickets.SetExtendedStyle(m_ListTickets.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 	
 	m_ListTickets.InsertColumn(0, _T("备注"), LVCFMT_CENTER, rect.Width()/18, 0);
 	m_ListTickets.InsertColumn(0, _T("其他"), LVCFMT_CENTER, rect.Width()/18, 0);
@@ -170,6 +171,30 @@ BOOL CBuyTicketsDlg::OnInitDialog()
 	m_ListTickets.InsertColumn(0, _T("到达站"), LVCFMT_CENTER, rect.Width()/18, 0);
 	m_ListTickets.InsertColumn(0, _T("出发站"), LVCFMT_CENTER, rect.Width()/18, 0);
 	m_ListTickets.InsertColumn(0, _T("车次"), LVCFMT_CENTER, rect.Width()/18, 0);
+
+
+	CRect rect_yupiao;
+	m_List_YuPiao.GetClientRect(&rect_yupiao); //获取列表控件的位置和大小
+	m_List_YuPiao.SetExtendedStyle(m_List_YuPiao.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	m_List_YuPiao.InsertColumn(0, _T("备注"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("其他"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("无座"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("硬座"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("软座"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("硬卧"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("动卧"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("软卧"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("高级软卧"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("二等座"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("一等座"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("商务座"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("历时"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("到达时间"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("出发时间"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("到达站"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("出发站"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
+	m_List_YuPiao.InsertColumn(0, _T("车次"), LVCFMT_CENTER, rect_yupiao.Width()/18, 0);
 
 	strPerson = "ADULT";
 
@@ -563,14 +588,9 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 		m_ListTickets.SetItemText(0, 14, A2W(ticketInfo[i].yz_num.c_str()));
 		m_ListTickets.SetItemText(0, 15, A2W(ticketInfo[i].wz_num.c_str()));
 		m_ListTickets.SetItemText(0, 16, A2W(ticketInfo[i].qt_num.c_str()));
+		m_ListTickets.SetItemText(0, 17, _T("预定"));
 	}
 	UpdateWindow();
-	
-	for ( int i = 0; i < AllTrainNum; i++ )
-	{
-		m_StrCombo_Train.InsertString( i, A2W(AllStation_vec[AllTrainNum - i - 1].c_str()) );
-	}
-	m_StrCombo_Train.SetCurSel( 0 );
 }
 
 
@@ -618,7 +638,7 @@ void CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	//如果出发地和目的地未填写，请提示填写
-	CString str1;
+	/*CString str1;
 	CString str2;
 	GetDlgItem(IDC_EDIT_fromstation)->GetWindowTextW(str1);
 	GetDlgItem(IDC_EDIT_deststation)->GetWindowTextW(str2);
@@ -632,15 +652,14 @@ void CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun()
 	//根据train_no查询车次信息（不需要验证码）
 	//url = https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=240000K1571D&from_station_telecode=BXP&to_station_telecode=XUN&depart_date=2018-04-23
 
-	int num = m_StrCombo_Train.GetCurSel( );
-	string Train_checi = AllStation_vec[AllTrainNum - num - 1];
 
-	//strEveryURL.clear();
-	//for(int i = 0; i < AllStation_vec.size(); i++)
+
+
+	strEveryURL.clear();
+	for(int i = 0; i < AllStation_vec.size(); i++)
 	{
 		string strurl = "https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=";
-		//strurl += AllTrainXuhao_vec[i];
-		strurl += AllTrainXuhao_vec[AllTrainNum - num - 1];
+		strurl += AllTrainXuhao_vec[i];
 		strurl += "&from_station_telecode=";
 		strurl += strFromstation;
 		strurl += "&to_station_telecode=";
@@ -654,6 +673,95 @@ void CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun()
 		std::string retStr = wininetHttp.RequestJsonInfo(strEveryURL[i], WE_Get, "", "");
 		std::string strEnd = wininetHttp.UtfToGbk(retStr.c_str());
 		wininetHttp.ParseTrainStationJsonInfo(strEnd);
-	}
+	}*/
 
+}
+
+
+void CBuyTicketsDlg::OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	//GetDlgItem(IDC_LIST_Tickets)->EnableWindow(FALSE);
+
+	m_List_YuPiao.DeleteAllItems();
+
+	if(SaveEveryTrainFoxToStation.size() != 0)
+	{
+		for(int i = 0; i < SaveEveryTrainFoxToStation.size(); i++)
+		{
+			delete SaveEveryTrainFoxToStation[i];
+		}
+		SaveEveryTrainFoxToStation.clear();
+	}
+	USES_CONVERSION;
+	POSITION ps;  
+	int nIndex;  
+	ps=m_ListTickets.GetFirstSelectedItemPosition();  
+	nIndex=m_ListTickets.GetNextSelectedItem(ps);//nIndex为选中的列表项Item值  
+	//获取当前序号之后，再获取选中的车次信息，来获取站点及从始发站 至每一站的车票信息
+	//根据train_no查询车次信息（不需要验证码）
+	//url = https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=240000K1571D&from_station_telecode=BXP&to_station_telecode=XUN&depart_date=2018-04-23
+	//string = ticketInfo[AllTrainNum -1 - nIndex].station_train_code;
+	string strurl = "https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=";
+	strurl += ticketInfo[nIndex].train_code_xuhao;
+	strurl += "&from_station_telecode=";
+	strurl += strFromstation;
+	strurl += "&to_station_telecode=";
+	strurl += strTostation;
+	strurl += "&depart_date=";
+	strurl += strFromdate.c_str();
+	string strTraincode = ticketInfo[nIndex].station_train_code;
+	std::string retStr = wininetHttp.RequestJsonInfo(strurl, WE_Get, "", "");
+	std::string strEnd = wininetHttp.UtfToGbk(retStr.c_str());
+	wininetHttp.ParseTrainStationJsonInfo(strEnd);
+	for(int i = 1; i < OneTrainAllStation.size(); i++)
+	{
+		string strTmpToStation = GetKeyValue(OneTrainAllStation[i]);
+		//获取从起始站 到 每一站的车票信息
+		string strTrainUrl = "https://kyfw.12306.cn/otn/leftTicket/queryO?leftTicketDTO.train_date=";
+		strTrainUrl += strFromdate.c_str();
+		strTrainUrl += "&leftTicketDTO.from_station=";
+		strTrainUrl += strFromstation;
+		strTrainUrl += "&leftTicketDTO.to_station=";
+		strTrainUrl += strTmpToStation;
+		strTrainUrl += "&purpose_codes=";
+		strTrainUrl += strPerson;
+
+		std::string retStrTmp = wininetHttp.RequestJsonInfo(strTrainUrl, WE_Get, "", "");
+		std::string strEndTmp = wininetHttp.UtfToGbk(retStrTmp.c_str());
+
+		//保存该车次 起始站 至 终点站的信息；
+		wininetHttp.ParseFoxTostationInfo(strEndTmp, strTraincode);
+	}
+	for(int j = SaveEveryTrainFoxToStation.size() - 1; j >= 0 ; j--)
+	{
+		TicketInfo *TmpticketInfo = SaveEveryTrainFoxToStation[j];
+		m_List_YuPiao.InsertItem(0, A2W(TmpticketInfo->station_train_code.c_str()));   
+		m_List_YuPiao.SetItemText(0, 1, A2W(TmpticketInfo->from_station_name.c_str()));   
+		m_List_YuPiao.SetItemText(0, 2, A2W(TmpticketInfo->to_station_name.c_str()));
+		m_List_YuPiao.SetItemText(0, 3, A2W(TmpticketInfo->start_time.c_str()));
+		m_List_YuPiao.SetItemText(0, 4, A2W(TmpticketInfo->arrive_time.c_str()));
+		m_List_YuPiao.SetItemText(0, 5, A2W(TmpticketInfo->lishi.c_str()));
+		m_List_YuPiao.SetItemText(0, 6, A2W(TmpticketInfo->swz_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 7, A2W(TmpticketInfo->zy_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 8, A2W(TmpticketInfo->ze_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 9, A2W(TmpticketInfo->gr_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 10, A2W(TmpticketInfo->rw_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 11, A2W(TmpticketInfo->dw_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 12, A2W(TmpticketInfo->yw_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 13, A2W(TmpticketInfo->rz_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 14, A2W(TmpticketInfo->yz_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 15, A2W(TmpticketInfo->wz_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 16, A2W(TmpticketInfo->qt_num.c_str()));
+		m_List_YuPiao.SetItemText(0, 17, _T("预定"));
+	}
+	m_List_YuPiao.SetRedraw(FALSE); 
+	//更新内容 
+	m_List_YuPiao.SetRedraw(TRUE); 
+	m_List_YuPiao.Invalidate(); 
+	m_List_YuPiao.UpdateWindow();
+	//UpdateWindow();
+	//GetDlgItem(IDC_LIST_Tickets)->EnableWindow(TRUE);
+	*pResult = 0;
 }

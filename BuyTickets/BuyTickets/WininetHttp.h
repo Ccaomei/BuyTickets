@@ -82,6 +82,9 @@ public:
 	// 解析卡口Json数据 
 	void ParseJsonInfo(const std::string &strJsonInfo);
 
+	//解析一辆车 出发地 至 指定目的地 的信息
+	void ParseFoxTostationInfo(const std::string &strFoxTostationJsonInfo, const std::string &strStation_Train_Code);
+
 	//解析站点的Json数据
 	void ParseStationJsonInfo(const std::string &strStationJsonInfo);
 

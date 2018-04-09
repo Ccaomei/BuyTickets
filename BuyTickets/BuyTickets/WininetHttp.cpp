@@ -258,6 +258,73 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 	mp.clear();
 }
 
+vector<TicketInfo*> SaveEveryTrainFoxToStation;
+
+//解析一辆车 出发地 至 指定目的地 的信息
+void CWininetHttp::ParseFoxTostationInfo(const std::string &strFoxTostationJsonInfo, const std::string &strStation_Train_Code)
+{
+	Json::Reader reader;		 //解析json用Json::Reader
+	Json::Value value;			 //可以代表任意类型
+
+	if(!reader.parse(strFoxTostationJsonInfo, value))
+	{
+		;
+	}
+
+	map<string, string>mp;
+	for(auto sub = value["data"]["map"].begin(); sub != value["data"]["map"].end(); sub++)
+	{
+		string strFir = sub.memberName();
+		string strSec = value["data"]["map"][sub.memberName()].asString();
+		mp.insert(pair<string, string>(strFir, strSec));
+	}
+	map<string, string>::iterator mp_it;
+
+	AllTrainNum = value["data"]["result"].size();
+	for(int j = 0; j < AllTrainNum; j++)
+	{
+		EveryTicketVec.clear();
+		string EveryInfo = value["data"]["result"][j].asString();
+		EveryTicketVec = SPlit(EveryInfo, "|");
+		if(EveryTicketVec[3] == strStation_Train_Code)//如果查询的车次 跟传入的车次相同，才保留信息
+		{
+			TicketInfo *TmpticketInfo = new TicketInfo ; //申请一个TicketInfo内存空间，保存该车次的座位信息；
+			TmpticketInfo->train_code_xuhao	= EveryTicketVec[2];
+			TmpticketInfo->station_train_code	= EveryTicketVec[3];
+			
+			for(mp_it = mp.begin(); mp_it != mp.end(); mp_it++)			//把车站编号，换成中文来显示
+			{
+				if(EveryTicketVec[6] == mp_it->first)
+				{
+					TmpticketInfo->from_station_name	= mp_it->second;
+				}
+				if(EveryTicketVec[7] == mp_it->first)
+				{
+					TmpticketInfo->to_station_name	= mp_it->second;
+				}
+			}
+			TmpticketInfo->start_time			= EveryTicketVec[8];
+			TmpticketInfo->arrive_time			= EveryTicketVec[9];
+			TmpticketInfo->lishi				= EveryTicketVec[10];
+			TmpticketInfo->swz_num				= EveryTicketVec[32];  //商务座 在32或25  后续再调
+			TmpticketInfo->zy_num				= EveryTicketVec[31];
+			TmpticketInfo->ze_num				= EveryTicketVec[30];
+			TmpticketInfo->gr_num				= EveryTicketVec[21];
+			TmpticketInfo->rw_num				= EveryTicketVec[23];
+			TmpticketInfo->dw_num				= EveryTicketVec[27];
+			TmpticketInfo->yw_num				= EveryTicketVec[28];
+			TmpticketInfo->rz_num				= EveryTicketVec[24];
+			TmpticketInfo->yz_num				= EveryTicketVec[29];
+			TmpticketInfo->wz_num				= EveryTicketVec[26];
+			TmpticketInfo->qt_num				= EveryTicketVec[22];
+			SaveEveryTrainFoxToStation.push_back(TmpticketInfo);
+			break;
+		}
+	}
+
+}
+
+
 vector<string> OneTrainAllStation;	//存放一个车 经过所有站点
 
 void CWininetHttp::ParseTrainStationJsonInfo(const std::string &strTrainStationJsonInfo)
