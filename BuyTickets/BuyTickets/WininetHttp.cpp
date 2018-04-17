@@ -45,6 +45,7 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 		if(lpUrl.empty())
 		{
 			throw WE_ParamErr;
+			return "";
 		}
 		Release();
 
@@ -52,6 +53,7 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 		if(m_hSession == NULL)
 		{
 			throw WE_InitErr;
+			return "";
 		}
 
 		INTERNET_PORT port = INTERNET_DEFAULT_HTTPS_PORT;
@@ -68,6 +70,7 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 			int num = GetLastError();
 			AfxMessageBox(_T("InternetConnectA"));
 			throw WE_ConnectErr;
+			return "";
 		}
 
 		std::string strRequestType;
@@ -106,6 +109,7 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 		if(m_hRequest == NULL)
 		{
 			throw WE_InitErr;
+			return "";
 		}
 
 		DWORD dwHeaderSize = (strHeader.empty()) ? 0 : strlen(strHeader.c_str());
@@ -123,6 +127,7 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 		if(!bRet)
 		{
 			throw WE_SendErr;
+			return "";
 		}
 
 		char szBuffer[READ_BUFFER_SIZE + 1] = {0};
@@ -130,10 +135,12 @@ const std::string CWininetHttp::RequestJsonInfo(const std::string &lpUrl, HttpRe
 		if(!HttpQueryInfoA(m_hRequest, HTTP_QUERY_RAW_HEADERS, szBuffer, &dwReadSize, NULL))//查询一个http请求的信息
 		{
 			throw WE_QueryErr;
+			return "";
 		}
 		if(NULL != strstr(szBuffer, "404"))
 		{
 			throw WE_404;
+			return "";
 		}
 
 		while(true)

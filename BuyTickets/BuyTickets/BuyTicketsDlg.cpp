@@ -78,6 +78,7 @@ CBuyTicketsDlg::CBuyTicketsDlg(CWnd* pParent /*=NULL*/)
 	, m_Radio_wangfan(false)
 	, m_Radio_putong(false)
 	, m_Radio_xuesheng(false)
+	, m_deststation_name(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -89,6 +90,9 @@ void CBuyTicketsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_DATETIMEPICKER_chufa, m_Fromdate);
 	DDX_Control(pDX, IDC_DATETIMEPICKER_fancheng, m_Backdate);
 	DDX_Control(pDX, IDC_LIST_yupiao, m_List_YuPiao);
+	DDX_Control(pDX, IDC_BUTTON_LoadIcon, m_BtnCtrol_Icon);
+	DDX_Text(pDX, IDC_EDIT_fromstation, m_fromstation_name);
+	DDX_Text(pDX, IDC_EDIT_deststation, m_deststation_name);
 }
 
 BEGIN_MESSAGE_MAP(CBuyTicketsDlg, CDialogEx)
@@ -103,6 +107,8 @@ BEGIN_MESSAGE_MAP(CBuyTicketsDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON_tuozhanchaxun, &CBuyTicketsDlg::OnBnClickedButtontuozhanchaxun)
 	ON_NOTIFY(NM_CLICK, IDC_LIST_Tickets, &CBuyTicketsDlg::OnNMClickListTickets)
+	ON_BN_CLICKED(IDC_BUTTON_Login, &CBuyTicketsDlg::OnBnClickedButtonLogin)
+	ON_BN_CLICKED(IDC_BUTTON_LoadIcon, &CBuyTicketsDlg::OnBnClickedButtonLoadicon)
 END_MESSAGE_MAP()
 
 
@@ -138,6 +144,10 @@ BOOL CBuyTicketsDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	//HICON m_IconBtn=AfxGetApp()->LoadIcon(IDI_ICON1);//导入Icon资源，利用m_hIconBtn来存储句柄。
+	//m_BtnCtrol_Icon.SetIcon(m_IconBtn); 
+	HBITMAP hBmp=::LoadBitmap(AfxGetInstanceHandle(),  MAKEINTRESOURCE(IDB_BITMAP1));   
+	m_BtnCtrol_Icon.SetBitmap(hBmp);
 
 	//设置初始化按钮状态
 	//GetDlgItem(IDC_RADIO_dancheng)->EnableWindow(TRUE);
@@ -399,6 +409,11 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	string strstation1;
 	CString strFsta1;
 	GetDlgItem(IDC_EDIT_fromstation)->GetWindowTextW(strFsta1);
+	if(strFsta1.IsEmpty())
+	{
+		AfxMessageBox(_T("请检查是否输入：出发地和目的地！"));
+		return;
+	}
 	CStringA strA1;
 	strA1 = strFsta1;
 	strstation1 = strA1;
@@ -466,6 +481,11 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	string strstation2;
 	CString strFsta2;
 	GetDlgItem(IDC_EDIT_deststation)->GetWindowTextW(strFsta2);
+	if(strFsta2.IsEmpty())
+	{
+		AfxMessageBox(_T("请检查是否输入：出发地和目的地！"));
+		return;
+	}
 	CStringA strA2;
 	strA2 = strFsta2;
 	strstation2 = strA2;
@@ -534,7 +554,7 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 
 	//组合url
 
-	strUrl = "https://kyfw.12306.cn/otn/leftTicket/queryO?leftTicketDTO.train_date=";
+	strUrl = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=";
 	strUrl += strFromdate.c_str();
 	strUrl += "&leftTicketDTO.from_station=";
 	strUrl += strFromstation;
@@ -558,6 +578,11 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	std::string strHeader = "";
 	std::string strPostData = "";
 	std::string retStr = wininetHttp.RequestJsonInfo(strUrl, WE_Get, strHeader, strPostData);
+	if(strcmp(retStr.c_str(), "") == 0)
+	{
+		AfxMessageBox(_T("RequestJsonInfo faile! please check url"));
+		return ;
+	}
 	std::string strEnd = wininetHttp.UtfToGbk(retStr.c_str());
 
 	USES_CONVERSION;
@@ -719,7 +744,7 @@ void CBuyTicketsDlg::OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		string strTmpToStation = GetKeyValue(OneTrainAllStation[i]);
 		//获取从起始站 到 每一站的车票信息
-		string strTrainUrl = "https://kyfw.12306.cn/otn/leftTicket/queryO?leftTicketDTO.train_date=";
+		string strTrainUrl = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=";
 		strTrainUrl += strFromdate.c_str();
 		strTrainUrl += "&leftTicketDTO.from_station=";
 		strTrainUrl += strFromstation;
@@ -764,4 +789,67 @@ void CBuyTicketsDlg::OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult)
 	//UpdateWindow();
 	//GetDlgItem(IDC_LIST_Tickets)->EnableWindow(TRUE);
 	*pResult = 0;
+}
+#include <afxwin.h>
+
+void CBuyTicketsDlg::OnBnClickedButtonLogin()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	weLogin = new CWELogin( AfxGetMainWnd() );
+	weLogin->DoModal();
+	delete weLogin;
+	//UpdateAllViews( NULL);
+}
+
+
+void CBuyTicketsDlg::OnBnClickedButtonLoadicon()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	//获取车站名及对应编码
+	string strstation1;
+	CString strFsta1;
+	GetDlgItem(IDC_EDIT_fromstation)->GetWindowTextW(strFsta1);
+	if(strFsta1.IsEmpty())
+	{
+		AfxMessageBox(_T("请检查是否输入：出发地和目的地！"));
+		return;
+	}
+	string strstation2;
+	CString strFsta2;
+	GetDlgItem(IDC_EDIT_deststation)->GetWindowTextW(strFsta2);
+	if(strFsta2.IsEmpty())
+	{
+		AfxMessageBox(_T("请检查是否输入：出发地和目的地！"));
+		return;
+	}
+	
+
+	CStringA strA1;
+	strA1 = strFsta1;
+	strstation1 = strA1;
+	strFromstation = GetKeyValue(strstation1);
+
+	//string strstation2;
+	//CString strFsta2;
+	//GetDlgItem(IDC_EDIT_deststation)->GetWindowTextW(strFsta2);
+	CStringA strA2;
+	strA2 = strFsta2;
+	strstation2 = strA2;
+	strTostation = GetKeyValue(strstation2);
+
+	if((strcmp(strFromstation.c_str(), "") == 0) || (strcmp(strTostation.c_str(), "") == 0))
+	{
+		AfxMessageBox(_T("请检查是否输入：出发地和目的地！"));
+		return;
+	}
+	else
+	{
+		string strTmp;
+		strTmp = strFromstation;
+		strFromstation = strTostation;
+		strTostation = strFromstation;
+		m_fromstation_name = strFsta2;
+		m_deststation_name = strFsta1;
+		UpdateData(FALSE);
+	}
 }

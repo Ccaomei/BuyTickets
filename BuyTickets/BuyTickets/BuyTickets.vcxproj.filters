@@ -22,6 +22,12 @@
     <None Include="res\BuyTickets.ico">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="res\icon1.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BuyTickets.h">
@@ -72,6 +78,9 @@
     <ClInclude Include="ini.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="WELogin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BuyTickets.cpp">
@@ -96,6 +105,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ini.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WELogin.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

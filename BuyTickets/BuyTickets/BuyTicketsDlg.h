@@ -4,6 +4,7 @@
 
 #pragma once
 #include "WininetHttp.h"
+#include "WELogin.h"
 #include "afxcmn.h"
 #include "afxdtctl.h"
 #include "afxwin.h"
@@ -22,6 +23,7 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 	CWininetHttp wininetHttp;
+	CWELogin * weLogin;
 
 // 实现
 protected:
@@ -57,4 +59,9 @@ public:
 	afx_msg void OnBnClickedButtontuozhanchaxun();
 	afx_msg void OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult);
 	CListCtrl m_List_YuPiao;
+	afx_msg void OnBnClickedButtonLogin();
+	CButton m_BtnCtrol_Icon;
+	afx_msg void OnBnClickedButtonLoadicon();
+	CString m_fromstation_name;
+	CString m_deststation_name;
 };
