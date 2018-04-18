@@ -191,7 +191,7 @@ vector<string> SPlit(string str,string separator)
 	return result;    
 }  
 
-
+map<string, string>global_mp; //对搜索的车站及对应的高铁站 站点的保存
 // 解析Json数据
 void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 {
@@ -204,7 +204,8 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 	}
 	//string str = value["data"]["flag"].asString();
 
-	map<string, string>mp;		//保存 站点编号 和 对应站点中文名字
+	//map<string, string>mp;		//保存 站点编号 和 对应站点中文名字  做成全局的保存起来，后来查询的每一辆车的具体情况，会用到车站名字（如：郑州、郑州东、信阳、信阳东这种 对高铁车次 站点郑州东站在改车次的第几站）
+	global_mp.clear();
 	int mpNum = value["data"]["map"].size();
 
 	//string strTmpFir = value["data"]["map"][ii].asString();
@@ -212,7 +213,7 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 	{
 		string strFir = sub.memberName();
 		string strSec = value["data"]["map"][sub.memberName()].asString();
-		mp.insert(pair<string, string>(strFir, strSec));
+		global_mp.insert(pair<string, string>(strFir, strSec));
 	}
 
 	map<string, string>::iterator mp_it;
@@ -234,7 +235,7 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 		ticketInfo[j].station_train_code	= EveryTicketVec[3];
 		//ticketInfo[j].from_station_name	= EveryTicketVec[6];
 		//ticketInfo[j].to_station_name		= EveryTicketVec[7];
-		for(mp_it = mp.begin(); mp_it != mp.end(); mp_it++)			//把车站编号，换成中文来显示
+		for(mp_it = global_mp.begin(); mp_it != global_mp.end(); mp_it++)			//把车站编号，换成中文来显示
 		{
 			if(EveryTicketVec[6] == mp_it->first)
 			{
@@ -262,7 +263,7 @@ void CWininetHttp::ParseJsonInfo(const std::string &strJsonInfo)
 		//}
 	}
 	EveryTicketVec.clear();
-	mp.clear();
+	//global_mp.clear();	//在每次开始查询之前情况map，针对每一辆车 做查询 还得用这个车站名，例如搜郑州，对于高铁 只能用郑州东 来找在该高铁的第几站
 }
 
 vector<TicketInfo*> SaveEveryTrainFoxToStation;

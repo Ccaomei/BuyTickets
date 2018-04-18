@@ -27,6 +27,8 @@ extern map<string, string>pingyin_map;
 extern map<string, string>jianxie2_map;
 extern map<string, string>xuhao_map;
 
+extern map<string, string>global_mp;		//对搜索的车站及对应的高铁站 站点的保存
+
 extern vector<string> OneTrainAllStation;	//存放一个车 经过所有站点
 extern vector<TicketInfo*> SaveEveryTrainFoxToStation;
 
@@ -339,12 +341,14 @@ string GetKeyValue(string strstation1)
 			}
 		}
 	}
+	return "";
 }
 
 void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	GetDlgItem(IDC_BUTTON_tuozhanchaxun)->EnableWindow(TRUE);
+	GetDlgItem(IDC_LIST_Tickets)->EnableWindow(FALSE);
 	//接口分析：
 	//协议：https:
 	//域名：kyfw.12306.cn/
@@ -573,7 +577,7 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 	//std::string strUrl = "https://kyfw.12306.cn/otn/leftTicket/queryO?leftTicketDTO.train_date=2018-03-23&leftTicketDTO.from_station=BJP&leftTicketDTO.to_station=ZZF&purpose_codes=ADULT";
 	std::string strHostName;
 	std::string strPageName;
-	WORD sPort;
+	//WORD sPort;
 	//wininetHttp.ParseURLWeb(strUrl, strHostName, strPageName,sPort);
 	std::string strHeader = "";
 	std::string strPostData = "";
@@ -616,6 +620,7 @@ void CBuyTicketsDlg::OnBnClickedButtonBeginconn()
 		m_ListTickets.SetItemText(0, 17, _T("预定"));
 	}
 	UpdateWindow();
+	GetDlgItem(IDC_LIST_Tickets)->EnableWindow(TRUE);
 }
 
 
@@ -707,13 +712,13 @@ void CBuyTicketsDlg::OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: 在此添加控件通知处理程序代码
-	//GetDlgItem(IDC_LIST_Tickets)->EnableWindow(FALSE);
-
+	
+	m_List_YuPiao.SetRedraw(FALSE);  
 	m_List_YuPiao.DeleteAllItems();
 
 	if(SaveEveryTrainFoxToStation.size() != 0)
 	{
-		for(int i = 0; i < SaveEveryTrainFoxToStation.size(); i++)
+		for(unsigned int i = 0; i < SaveEveryTrainFoxToStation.size(); i++)
 		{
 			delete SaveEveryTrainFoxToStation[i];
 		}
@@ -740,24 +745,83 @@ void CBuyTicketsDlg::OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult)
 	std::string retStr = wininetHttp.RequestJsonInfo(strurl, WE_Get, "", "");
 	std::string strEnd = wininetHttp.UtfToGbk(retStr.c_str());
 	wininetHttp.ParseTrainStationJsonInfo(strEnd);
-	for(int i = 1; i < OneTrainAllStation.size(); i++)
+	int TrainStationCount = OneTrainAllStation.size();
+	int fromPos;
+	int toPos;
+	bool isFindFromStation = false;
+	bool isFindToStation = false;
+	map<string, string>::iterator global_mp_it;
+	for(int i = 0; i < TrainStationCount; i++)
 	{
-		string strTmpToStation = GetKeyValue(OneTrainAllStation[i]);
-		//获取从起始站 到 每一站的车票信息
-		string strTrainUrl = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=";
-		strTrainUrl += strFromdate.c_str();
-		strTrainUrl += "&leftTicketDTO.from_station=";
-		strTrainUrl += strFromstation;
-		strTrainUrl += "&leftTicketDTO.to_station=";
-		strTrainUrl += strTmpToStation;
-		strTrainUrl += "&purpose_codes=";
-		strTrainUrl += strPerson;
+		for(global_mp_it = global_mp.begin(); global_mp_it != global_mp.end(); global_mp_it++)
+		{
+			string tmpStationName = GetKeyValue(OneTrainAllStation[i]);
+			if( isFindFromStation == false)
+			{
+				if(strcmp(/*strFromstation.c_str()*/(global_mp_it->first).c_str(), tmpStationName.c_str()) == 0)
+				{
+					fromPos = i;
+					isFindFromStation = true;
+					continue;
+				}
+			}
+			if(isFindToStation == false)
+			{
+				if(strcmp(/*strTostation.c_str()*/(global_mp_it->first).c_str(), tmpStationName.c_str()) == 0)
+				{
+					toPos = i;
+					isFindToStation = true;
+					continue;
+					//break;
+				}
+			}
+			if((isFindFromStation == true) && (isFindToStation == true))
+				break;
+		}
+	}
+	//int circleNum = fromNum*(TrainStationCount - toNum + 1);
+	//for(int i = 1; i < OneTrainAllStation.size(); i++)
+	int bianli0 = 0;
+	if((fromPos + 1 - 5) > 0)
+	{
+		bianli0 = fromPos - 4;
+	}
+	else
+	{
+		bianli0 = 0;
+	}
+	int bianli1 = 0;
+	if((toPos + 5) < TrainStationCount)
+	{
+		bianli1 = toPos + 4;
+	}
+	else
+	{
+		bianli1 = TrainStationCount;
+	}
 
-		std::string retStrTmp = wininetHttp.RequestJsonInfo(strTrainUrl, WE_Get, "", "");
-		std::string strEndTmp = wininetHttp.UtfToGbk(retStrTmp.c_str());
+	for(int i = bianli0; i < fromPos + 1; i++)
+	{
+		for(int ii = toPos; ii < bianli1; ii++)
+		{
+			string strTmpFromStation = GetKeyValue(OneTrainAllStation[i]); //火车起始站
+			string strTmpToStation = GetKeyValue(OneTrainAllStation[ii]);
+			//获取从起始站 到 每一站的车票信息
+			string strTrainUrl = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=";
+			strTrainUrl += strFromdate.c_str();
+			strTrainUrl += "&leftTicketDTO.from_station=";
+			strTrainUrl += strTmpFromStation;
+			strTrainUrl += "&leftTicketDTO.to_station=";
+			strTrainUrl += strTmpToStation;
+			strTrainUrl += "&purpose_codes=";
+			strTrainUrl += strPerson;
 
-		//保存该车次 起始站 至 终点站的信息；
-		wininetHttp.ParseFoxTostationInfo(strEndTmp, strTraincode);
+			std::string retStrTmp = wininetHttp.RequestJsonInfo(strTrainUrl, WE_Get, "", "");
+			std::string strEndTmp = wininetHttp.UtfToGbk(retStrTmp.c_str());
+
+			//保存该车次 起始站 至 终点站的信息；
+			wininetHttp.ParseFoxTostationInfo(strEndTmp, strTraincode);
+		}
 	}
 	for(int j = SaveEveryTrainFoxToStation.size() - 1; j >= 0 ; j--)
 	{
@@ -781,13 +845,11 @@ void CBuyTicketsDlg::OnNMClickListTickets(NMHDR *pNMHDR, LRESULT *pResult)
 		m_List_YuPiao.SetItemText(0, 16, A2W(TmpticketInfo->qt_num.c_str()));
 		m_List_YuPiao.SetItemText(0, 17, _T("预定"));
 	}
-	m_List_YuPiao.SetRedraw(FALSE); 
+	
 	//更新内容 
 	m_List_YuPiao.SetRedraw(TRUE); 
-	m_List_YuPiao.Invalidate(); 
-	m_List_YuPiao.UpdateWindow();
-	//UpdateWindow();
-	//GetDlgItem(IDC_LIST_Tickets)->EnableWindow(TRUE);
+	m_List_YuPiao.RedrawWindow();  
+	
 	*pResult = 0;
 }
 #include <afxwin.h>
